@@ -1,3 +1,4 @@
+import com.michelin.cio.hudson.plugins.rolestrategy.RoleBasedAuthorizationStrategy
 /**
  * Create a Role Strategy role from a template role by copying its permissions, setting a pattern,
  * and (optionally) assigning it to users and/or groups.
@@ -36,9 +37,9 @@ def call(Map cfg = [:]) {
   def strategy = jenkins.getAuthorizationStrategy()
 
   Class RBAS = loadClass('com.michelin.cio.hudson.plugins.rolestrategy.RoleBasedAuthorizationStrategy')
-  if (!(strategy instanceof RBAS)) {
+if (!(strategy instanceof RoleBasedAuthorizationStrategy)) {
     error "[RBAC] Role Strategy plugin is not active (Authorization must be 'Role-Based Strategy')."
-  }
+}
 
   Class RoleTypeCls = tryClasses([
     'com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType',   // newer
