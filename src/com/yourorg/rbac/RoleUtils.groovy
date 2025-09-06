@@ -4,8 +4,9 @@ import com.michelin.cio.hudson.plugins.rolestrategy.RoleBasedAuthorizationStrate
 import com.michelin.cio.hudson.plugins.rolestrategy.Role
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType
 import com.michelin.cio.hudson.plugins.rolestrategy.AuthorizationType
-import hudson.security.Permission
+import com.michelin.cio.hudson.plugins.rolestrategy.PermissionEntry
 import jenkins.model.Jenkins
+import hudson.security.Permission
 
 class RoleUtils implements Serializable {
 
@@ -43,12 +44,11 @@ class RoleUtils implements Serializable {
         // Create new role from template
         def newRole = new Role(newRoleName, pattern, templateRole.getPermissions())
         itemRoleMap.addRole(newRole)
-
-        jenkins.save()
         println "[RBAC] Role '${newRoleName}' created successfully from template '${templateRoleName}'."
     }
 
-    static void assignUserToItemRole(String roleName, String username) {
+    // New method to assign a role to a user or group explicitly
+    static void assignRoleToUser(String roleName, String username, boolean isGroup = false) {
         Jenkins jenkins = Jenkins.get()
         def rbas = jenkins.getAuthorizationStrategy()
 
@@ -59,12 +59,12 @@ class RoleUtils implements Serializable {
         def itemRoleMap = rbas.getRoleMap(RoleType.Project)
         def role = itemRoleMap.getRole(roleName)
         if (role == null) {
-            throw new IllegalArgumentException("Role '${roleName}' not found in Item roles")
+            throw new IllegalArgumentException("Role '${roleName}' does not exist")
         }
 
-        // Assign user
-        itemRoleMap.assignRole(role, username)  // By default this assigns USER type
+        def authType = isGroup ? AuthorizationType.GROUP : AuthorizationType.USER
+        itemRoleMap.assignRole(role, new PermissionEntry(authType, username))
         jenkins.save()
-        println "[RBAC] User '${username}' assigned to role '${roleName}' successfully."
+        println "[RBAC] Role '${roleName}' assigned to ${isGroup ? 'group' : 'user'} '${username}'"
     }
 }
