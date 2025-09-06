@@ -47,7 +47,6 @@ class RoleUtils implements Serializable {
         println "[RBAC] Role '${newRoleName}' created successfully from template '${templateRoleName}'."
     }
 
-    // New method to assign a role to a user or group explicitly
     static void assignRoleToUser(String roleName, String username, boolean isGroup = false) {
         Jenkins jenkins = Jenkins.get()
         def rbas = jenkins.getAuthorizationStrategy()
@@ -56,15 +55,31 @@ class RoleUtils implements Serializable {
             throw new IllegalStateException("Role Strategy plugin is not active")
         }
 
+        // Assign item/project role
         def itemRoleMap = rbas.getRoleMap(RoleType.Project)
         def role = itemRoleMap.getRole(roleName)
         if (role == null) {
             throw new IllegalArgumentException("Role '${roleName}' does not exist")
         }
-
         def authType = isGroup ? AuthorizationType.GROUP : AuthorizationType.USER
         itemRoleMap.assignRole(role, new PermissionEntry(authType, username))
-        jenkins.save()
         println "[RBAC] Role '${roleName}' assigned to ${isGroup ? 'group' : 'user'} '${username}'"
+
+        // Assign global role 'read_access' to the same user
+        def globalRoleMap = rbas.getRoleMap(RoleType.Global)
+        def globalRole = globalRoleMap.getRole("read_access")
+        if (globalRole == null) {
+            println "[RBAC] Global role 'read_access' not found, creating it..."
+            def readPermissions = [
+                Permission.fromId("hudson.model.Item.Read"),
+                Permission.fromId("hudson.model.View.Read")
+            ] as Set
+            globalRole = new Role("read_access", ".*", readPermissions)
+            globalRoleMap.addRole(globalRole)
+            println "[RBAC] Global role 'read_access' created."
+        }
+        globalRoleMap.assignRole(globalRole, new PermissionEntry(AuthorizationType.USER, username))
+        jenkins.save()
+        println "[RBAC] Global role 'read_access' assigned to user '${username}'"
     }
 }
