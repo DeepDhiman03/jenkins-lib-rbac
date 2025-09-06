@@ -3,8 +3,9 @@ package com.yourorg.rbac
 import com.michelin.cio.hudson.plugins.rolestrategy.RoleBasedAuthorizationStrategy
 import com.michelin.cio.hudson.plugins.rolestrategy.Role
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType
-import jenkins.model.Jenkins
+import com.michelin.cio.hudson.plugins.rolestrategy.AuthorizationType
 import hudson.security.Permission
+import jenkins.model.Jenkins
 
 class RoleUtils implements Serializable {
 
@@ -23,13 +24,10 @@ class RoleUtils implements Serializable {
         def templateRole = itemRoleMap.getRole(templateRoleName)
         if (templateRole == null) {
             println "[RBAC] Template role '${templateRoleName}' not found, creating it..."
-            
-            // Minimal "Read" permissions matching UI
             def readPermissions = [
                 Permission.fromId("hudson.model.Item.Read"),
                 Permission.fromId("hudson.model.View.Read")
             ] as Set
-            
             templateRole = new Role(templateRoleName, ".*", readPermissions)
             itemRoleMap.addRole(templateRole)
             println "[RBAC] Template role '${templateRoleName}' created."
@@ -48,5 +46,25 @@ class RoleUtils implements Serializable {
 
         jenkins.save()
         println "[RBAC] Role '${newRoleName}' created successfully from template '${templateRoleName}'."
+    }
+
+    static void assignUserToItemRole(String roleName, String username) {
+        Jenkins jenkins = Jenkins.get()
+        def rbas = jenkins.getAuthorizationStrategy()
+
+        if (!(rbas instanceof RoleBasedAuthorizationStrategy)) {
+            throw new IllegalStateException("Role Strategy plugin is not active")
+        }
+
+        def itemRoleMap = rbas.getRoleMap(RoleType.Project)
+        def role = itemRoleMap.getRole(roleName)
+        if (role == null) {
+            throw new IllegalArgumentException("Role '${roleName}' not found in Item roles")
+        }
+
+        // Assign user
+        itemRoleMap.assignRole(role, username)  // By default this assigns USER type
+        jenkins.save()
+        println "[RBAC] User '${username}' assigned to role '${roleName}' successfully."
     }
 }
