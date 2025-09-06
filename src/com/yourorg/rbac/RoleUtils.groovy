@@ -3,6 +3,7 @@ package com.yourorg.rbac
 import jenkins.model.Jenkins
 import com.michelin.cio.hudson.plugins.rolestrategy.Role
 import com.michelin.cio.hudson.plugins.rolestrategy.RoleBasedAuthorizationStrategy
+import com.michelin.cio.hudson.plugins.rolestrategy.RoleType
 
 class RoleUtils {
 
@@ -20,7 +21,7 @@ class RoleUtils {
         }
 
         // Choose Global role map (for simplicity)
-        def roleMap = strategy.getRoleMap(RoleBasedAuthorizationStrategy.GLOBAL)
+        def roleMap = strategy.getRoleMap(RoleType.GLOBAL)
 
         // Get template role
         def templateRole = roleMap.getRole(templateRoleName)
