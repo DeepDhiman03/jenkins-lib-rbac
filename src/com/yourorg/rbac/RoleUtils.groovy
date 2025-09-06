@@ -37,4 +37,16 @@ class RoleUtils implements Serializable {
 
         // Remove existing role if already exists
         def existing = itemRoleMap.getRole(newRoleName)
-        if (existing != nu
+        if (existing != null) {
+            itemRoleMap.removeRole(existing)
+            println "[RBAC] Existing role '${newRoleName}' removed."
+        }
+
+        // Create new role from template
+        def newRole = new Role(newRoleName, pattern, templateRole.getPermissions())
+        itemRoleMap.addRole(newRole)
+
+        jenkins.save()
+        println "[RBAC] Role '${newRoleName}' created successfully from template '${templateRoleName}'."
+    }
+}
