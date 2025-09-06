@@ -123,7 +123,10 @@ String normalizeRoleType(String input, Class roleTypeEnumCls) {
   if (s == 'NODES') s = 'AGENT'
 
   // Check available constants in this plugin version
-  def names = roleTypeEnumCls.getEnumConstants()*.name()
+  def names = []
+  roleTypeEnumCls.getEnumConstants().each { enumConst ->
+    names << enumConst.name()
+}
   if (names.contains(s)) return s
 
   // Fallbacks: prefer GLOBAL if unknown
