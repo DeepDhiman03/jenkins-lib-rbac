@@ -1,7 +1,4 @@
-def call(Map cfg) {
-    String roleName = cfg.roleName
-    String pattern  = cfg.pattern
-    String template = cfg.template
-
-    com.yourorg.rbac.RoleUtils.createRoleFromTemplate(roleName, pattern, template)
+// vars/createRoleFromTemplate.groovy
+def call(String roleName, String pattern, String templateRoleName) {
+    com.yourorg.rbac.RoleUtils.createRoleFromTemplate(roleName, pattern, templateRoleName)
 }
