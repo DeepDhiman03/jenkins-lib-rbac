@@ -1,31 +1,40 @@
 package com.yourorg.rbac
 
-import jenkins.model.Jenkins
-import com.michelin.cio.hudson.plugins.rolestrategy.*
+import com.michelin.cio.hudson.plugins.rolestrategy.RoleBasedAuthorizationStrategy
+import com.michelin.cio.hudson.plugins.rolestrategy.Role
 import com.synopsys.arc.jenkins.plugins.rolestrategy.RoleType
+import jenkins.model.Jenkins
+import hudson.security.Permission
 
-class RoleUtils {
-    static void createRoleFromTemplate(String newRoleName, String pattern, String templateRoleName) {
-        def jenkins = Jenkins.get()
+class RoleUtils implements Serializable {
+
+    static void createRoleFromTemplate(String newRoleName, String pattern, String templateRoleName = "Read") {
+        Jenkins jenkins = Jenkins.get()
         def rbas = jenkins.getAuthorizationStrategy()
 
         if (!(rbas instanceof RoleBasedAuthorizationStrategy)) {
             throw new IllegalStateException("Role Strategy plugin is not active")
         }
 
+        // Use Project/Item roles
         def itemRoleMap = rbas.getRoleMap(RoleType.Project)
+
+        // Ensure template role exists (create if missing)
         def templateRole = itemRoleMap.getRole(templateRoleName)
         if (templateRole == null) {
-            throw new IllegalArgumentException("Template role '${templateRoleName}' not found")
+            println "[RBAC] Template role '${templateRoleName}' not found, creating it..."
+            
+            // Minimal "Read" permissions matching UI
+            def readPermissions = [
+                Permission.fromId("hudson.model.Item.Read"),
+                Permission.fromId("hudson.model.View.Read")
+            ] as Set
+            
+            templateRole = new Role(templateRoleName, ".*", readPermissions)
+            itemRoleMap.addRole(templateRole)
+            println "[RBAC] Template role '${templateRoleName}' created."
         }
 
+        // Remove existing role if already exists
         def existing = itemRoleMap.getRole(newRoleName)
-        if (existing != null) {
-            itemRoleMap.removeRole(existing)
-        }
-
-        def newRole = new Role(newRoleName, pattern, templateRole.getPermissions())
-        itemRoleMap.addRole(newRole)
-        jenkins.save()
-    }
-}
+        if (existing != nu
