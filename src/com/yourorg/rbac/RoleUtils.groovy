@@ -18,10 +18,9 @@ class RoleUtils implements Serializable {
             throw new IllegalStateException("Role Strategy plugin is not active")
         }
 
-        // Use Project/Item roles
+
         def itemRoleMap = rbas.getRoleMap(RoleType.Project)
 
-        // Ensure template role exists (create if missing)
         def templateRole = itemRoleMap.getRole(templateRoleName)
         if (templateRole == null) {
             println "[RBAC] Template role '${templateRoleName}' not found, creating it..."
@@ -34,14 +33,12 @@ class RoleUtils implements Serializable {
             println "[RBAC] Template role '${templateRoleName}' created."
         }
 
-        // Remove existing role if already exists
         def existing = itemRoleMap.getRole(newRoleName)
         if (existing != null) {
             itemRoleMap.removeRole(existing)
             println "[RBAC] Existing role '${newRoleName}' removed."
         }
 
-        // Create new role from template
         def newRole = new Role(newRoleName, pattern, templateRole.getPermissions())
         itemRoleMap.addRole(newRole)
         println "[RBAC] Role '${newRoleName}' created successfully from template '${templateRoleName}'."
@@ -55,7 +52,6 @@ class RoleUtils implements Serializable {
             throw new IllegalStateException("Role Strategy plugin is not active")
         }
 
-        // Assign item/project role
         def itemRoleMap = rbas.getRoleMap(RoleType.Project)
         def role = itemRoleMap.getRole(roleName)
         if (role == null) {
@@ -65,7 +61,6 @@ class RoleUtils implements Serializable {
         itemRoleMap.assignRole(role, new PermissionEntry(authType, username))
         println "[RBAC] Role '${roleName}' assigned to ${isGroup ? 'group' : 'user'} '${username}'"
 
-        // Assign global role 'read_access' to the same user
         def globalRoleMap = rbas.getRoleMap(RoleType.Global)
         def globalRole = globalRoleMap.getRole("read_access")
         if (globalRole == null) {
