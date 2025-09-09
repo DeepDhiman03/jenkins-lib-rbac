@@ -18,7 +18,6 @@ class RoleUtils implements Serializable {
             throw new IllegalStateException("Role Strategy plugin is not active")
         }
 
-
         def itemRoleMap = rbas.getRoleMap(RoleType.Project)
 
         def templateRole = itemRoleMap.getRole(templateRoleName)
@@ -44,7 +43,7 @@ class RoleUtils implements Serializable {
         println "[RBAC] Role '${newRoleName}' created successfully from template '${templateRoleName}'."
     }
 
-    static void assignRoleToUser(String roleName, String username, boolean isGroup = false) {
+    static void assignRoleToGroup(String roleName, String groupName) {
         Jenkins jenkins = Jenkins.get()
         def rbas = jenkins.getAuthorizationStrategy()
 
@@ -52,15 +51,16 @@ class RoleUtils implements Serializable {
             throw new IllegalStateException("Role Strategy plugin is not active")
         }
 
+        // Assign item role
         def itemRoleMap = rbas.getRoleMap(RoleType.Project)
         def role = itemRoleMap.getRole(roleName)
         if (role == null) {
             throw new IllegalArgumentException("Role '${roleName}' does not exist")
         }
-        def authType = isGroup ? AuthorizationType.GROUP : AuthorizationType.USER
-        itemRoleMap.assignRole(role, new PermissionEntry(authType, username))
-        println "[RBAC] Role '${roleName}' assigned to ${isGroup ? 'group' : 'user'} '${username}'"
+        itemRoleMap.assignRole(role, new PermissionEntry(AuthorizationType.GROUP, groupName))
+        println "[RBAC] Role '${roleName}' assigned to group '${groupName}'"
 
+        // Ensure global role "read_access"
         def globalRoleMap = rbas.getRoleMap(RoleType.Global)
         def globalRole = globalRoleMap.getRole("read_access")
         if (globalRole == null) {
@@ -73,8 +73,8 @@ class RoleUtils implements Serializable {
             globalRoleMap.addRole(globalRole)
             println "[RBAC] Global role 'read_access' created."
         }
-        globalRoleMap.assignRole(globalRole, new PermissionEntry(AuthorizationType.USER, username))
+        globalRoleMap.assignRole(globalRole, new PermissionEntry(AuthorizationType.GROUP, groupName))
         jenkins.save()
-        println "[RBAC] Global role 'read_access' assigned to user '${username}'"
+        println "[RBAC] Global role 'read_access' assigned to group '${groupName}'"
     }
 }
